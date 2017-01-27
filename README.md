@@ -1,12 +1,12 @@
 # respeaker-xmos-hid
 
-Python & C hidapi examples for the "Respeaker" microphone array to show angle &amp; VAD information
+Python & C hidapi examples for the "Respeaker" microphone array to show angle &amp; voice activity (VAD) information.
 
-For both, you need to install hidapi
+For both, you need to install [hidapi.](https://github.com/signal11/hidapi)
 
-For Python, you need this [hidapi wrapper](https://pypi.python.org/pypi/hid).
+For Python, you need this [hidapi wrapper](https://pypi.python.org/pypi/hidapi). (Note: there are two python modules called hid, this is the one you get by pip install hidapi. The other probably works too but has different calling conventions.)
 
-The Python example records 10 seconds to a wave file and prints out VAD and voice angle information in real time to the screen.
+The Python example records 10 seconds to a wave file called output.wav and prints out VAD and voice angle information in real time to the screen. Just plug the mic array directly over USB to your computer and run the script.
 
 ```
 carry:respeaker-xmos-hid bwhitman$ python listen_and_get_position.py 

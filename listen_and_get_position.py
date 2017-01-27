@@ -1,4 +1,5 @@
-import wave, os, pyaudio, time, hid
+import wave, os, pyaudio, time
+import hid # https://pypi.python.org/pypi/hidapi aka https://github.com/trezor/cython-hidapi
 
 _pyaudio_instance = pyaudio.PyAudio()
 _wav = None
@@ -6,12 +7,9 @@ RESPEAKER_VENDOR_ID = 0x2886
 RESPEAKER_PRODUCT_ID = 0x07
 RECORD_SR = 16000
 
-# Set up the HID driver, you have to open it by path so we look it up first by VID and PID
-_dev = hid.device(vendor_id = RESPEAKER_VENDOR_ID, product_id = RESPEAKER_PRODUCT_ID)
-for x in hid.enumerate():
-    if x['vendor_id'] == RESPEAKER_VENDOR_ID and x['product_id'] == RESPEAKER_PRODUCT_ID:
-        _dev.open_path(x['path'])
-
+# Set up the HID driver
+_dev = hid.device()
+_dev.open(RESPEAKER_VENDOR_ID, RESPEAKER_PRODUCT_ID)
 
 # Write data to a register, return how many bytes were written
 def write_register(register, data):
@@ -106,7 +104,7 @@ def main():
     # And test writing a register, the LED -- I turn them off, saves ~120 mA
     write_register(0, [0, 0, 0, 0]) # mode, b, g, r  -- mode 0 is "all off"
     # Now record audio to a wav file for 10 seconds and print VAD and angle to screen
-    record()
+    record(length_seconds = 10)
 
 if __name__ == '__main__':
     main()
