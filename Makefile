@@ -1,7 +1,8 @@
 # gcc -L/usr/local/lib -I/usr/local/include/hidapi hidapitest.c -o hidapitest -lhidapi
 
 CC=gcc
-CFLAGS=-I/usr/local/include/hidapi -L/usr/local/lib -lhidapi
+CFLAGS=-I/usr/local/include/hidapi 
+LDFLAGS=-L/usr/local/lib -lhidapi
 DEPS = 
 OBJ = main.o
 
@@ -9,5 +10,7 @@ OBJ = main.o
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 respeaker_hid: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
+clean:
+	rm $(OBJ) respeaker_hid
