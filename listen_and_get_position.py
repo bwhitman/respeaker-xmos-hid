@@ -4,12 +4,14 @@ _pyaudio_instance = pyaudio.PyAudio()
 _wav = None
 RESPEAKER_VENDOR_ID = 0x2886
 RESPEAKER_PRODUCT_ID = 0x07
+RECORD_SR = 16000
 
 # Set up the HID driver, you have to open it by path so we look it up first by VID and PID
 _dev = hid.device(vendor_id = RESPEAKER_VENDOR_ID, product_id = RESPEAKER_PRODUCT_ID)
 for x in hid.enumerate():
     if x['vendor_id'] == RESPEAKER_VENDOR_ID and x['product_id'] == RESPEAKER_PRODUCT_ID:
         _dev.open_path(x['path'])
+
 
 # Write data to a register, return how many bytes were written
 def write_register(register, data):
@@ -18,14 +20,16 @@ def write_register(register, data):
 
 # Read length data from a register, return the data
 def read_register(register, length):
+    # To read a register you send reg & 0x80, and then read it back
+    # If you have blocking off the read will return none if it's too soon after
     send_data = [0, register, 0x80, length, 0, 0, 0]
     what = _dev.write(send_data)
     ret = _dev.read(len(send_data) + length)
-    return ret[4:4+length]
+    return ret[4:4+length] # Data comes in at the 4th byte
 
 # See if there's any auto report (VAD and voice angle), if not, return immediately with None
 def read_auto_report():
-    # Temporarily turn off blocking
+    # Temporarily turn off blocking, the auto report only comes in on VAD changes
     _dev.set_nonblocking(1)
     ret = _dev.read(9)
     _dev.set_nonblocking(0)
@@ -62,7 +66,7 @@ def record(length_seconds=10, filename="output.wav"):
         os.remove(filename)
 
     _wav = wave.open(filename, 'wb')
-    _wav.setframerate(16000) # Must be 16KHz
+    _wav.setframerate(RECORD_SR) 
     _wav.setsampwidth(2) # shorts
     _wav.setnchannels(1) # 1 channel 
 
@@ -75,7 +79,7 @@ def record(length_seconds=10, filename="output.wav"):
         input=True, 
         start=False,
         format=pyaudio.paInt16,
-        channels=1,rate=16000, 
+        channels=1,rate=RECORD_SR, 
         frames_per_buffer=512, 
         stream_callback=callback,  
         input_device_index=device_index 
@@ -96,10 +100,11 @@ def record(length_seconds=10, filename="output.wav"):
 
 def main():
     # Test reading a register, like the mic gain (set to 30dB by factory)
+    # See registers.csv for the full list of what is get/settable
     mic_gain = read_register(0x10, 1)[0]
     print "Mic gain is set to %d" % (mic_gain)
     # And test writing a register, the LED -- I turn them off, saves ~120 mA
-    write_register(0, [1, 0, 0, 0]) # b, g, r 
+    write_register(0, [0, 0, 0, 0]) # mode, b, g, r  -- mode 0 is "all off"
     # Now record audio to a wav file for 10 seconds and print VAD and angle to screen
     record()
 
